@@ -8,7 +8,8 @@ package downloader;
  */
 public enum State {
     /**
-     * newborn - Not in processing queue or executing thread
+     * newborn - Not in processing queue or in executing thread.
+     * Stillborn task cancelled before execution remains with this state
      */
     NEW,
 
@@ -28,7 +29,8 @@ public enum State {
     PAUSED,
 
     /**
-     * Successfully downloaded the result
+     * Successfully downloaded the result.
+     * Notice that finished task may contain failed subtasks
      */
     FINISHED,
 
