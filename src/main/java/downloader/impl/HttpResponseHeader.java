@@ -13,10 +13,10 @@ public class HttpResponseHeader {
     final private Map<String, List<String>> fields;
 
     HttpResponseHeader(Map<String, List<String>> headerFields) {
-        this.fields=headerFields;
+        this.fields = headerFields;
     }
 
-    public Map<String, List<String>> getFields(){
+    public Map<String, List<String>> getFields() {
         return Collections.unmodifiableMap(fields);
     }
 }

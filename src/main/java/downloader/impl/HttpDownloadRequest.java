@@ -1,6 +1,5 @@
 package downloader.impl;
 
-import com.sun.istack.internal.Nullable;
 import downloader.DownloadHandler;
 import downloader.DownloadRequest;
 import downloader.URLRequest;
@@ -29,7 +28,6 @@ public class HttpDownloadRequest implements DownloadRequest {
         return timeout;
     }
 
-    @Nullable
     @Override
     public DownloadHandler getHandler() {
         return DownloadHandler;

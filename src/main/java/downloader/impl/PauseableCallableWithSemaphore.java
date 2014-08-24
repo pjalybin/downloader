@@ -43,7 +43,6 @@ public abstract class PauseableCallableWithSemaphore<T> implements Callable<T> {
      */
     private volatile Thread runningThread;
 
-
     protected PauseableCallableWithSemaphore(Semaphore semaphore) {
         this.semaphore = semaphore;
     }
@@ -71,6 +70,12 @@ public abstract class PauseableCallableWithSemaphore<T> implements Callable<T> {
 
     protected abstract T execute() throws Exception;
 
+    /**
+     * check pause flag and wait if it is raised
+     * releases semaphore when waiting
+     *
+     * @throws InterruptedException thread interrupted
+     */
     protected void waitPause() throws InterruptedException {
         if (state == State.RUNNING) {
             pauseLock.lockInterruptibly();
@@ -92,6 +97,9 @@ public abstract class PauseableCallableWithSemaphore<T> implements Callable<T> {
         if (Thread.interrupted()) throw new InterruptedException();
     }
 
+    /**
+     * ask task to pause
+     */
     public void pause() {
         pauseLock.lock();
         try {
@@ -101,6 +109,9 @@ public abstract class PauseableCallableWithSemaphore<T> implements Callable<T> {
         }
     }
 
+    /**
+     * ask task to resume pause waiting
+     */
     public void resume() {
         pauseLock.lock();
         try {
@@ -111,10 +122,16 @@ public abstract class PauseableCallableWithSemaphore<T> implements Callable<T> {
         }
     }
 
+    /**
+     * @return state of task lifecycle
+     */
     public State getState() {
         return state;
     }
 
+    /**
+     * @return running thread of task
+     */
     protected Thread getRunningThread() {
         return runningThread;
     }

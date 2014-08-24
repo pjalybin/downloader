@@ -9,6 +9,7 @@ import downloader.impl.HttpDownloadManager;
 import downloader.impl.HttpResponseHeader;
 
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,18 +23,15 @@ import java.util.concurrent.ExecutionException;
  */
 public class Demo {
     public static void main(String[] args) {
-
-        try(HttpDownloadManager manager = new HttpDownloadManager(10)) {
+        try (HttpDownloadManager manager = new HttpDownloadManager(5)) {
 
             List<DownloadController> controllers = new ArrayList<>();
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1000; i++) {
                 DownloadController downloadController = manager.download()
+                        .timeout(60000)
                         .urls(
                                 new URL("http://yandex.ru/images/today?size=1920x1080"),
-                                new URL("http://yandex.ru/images/today?size=1920x1080"),
-                                new URL("http://yandex.ru/images/today?size=1920x1080"),
-                                new URL("http://yandex.ru/images/today?size=1920x1080"),
-                                new URL("http://yandex.ru/images/today?size=1920x1080")
+                                new URL("http://ya.ru")
                         )
                         .handler(new HttpDownloadHandler() {
                                      @Override
@@ -84,6 +82,9 @@ public class Demo {
                                          System.out.println(
                                                  controller.hashCode() + " " + urlRequest.hashCode() +
                                                          " download url failed " + cause.getMessage() + cause.getClass());
+                                         if (cause instanceof ConnectException) {
+                                             controller.restart();
+                                         }
                                          return false;
                                      }
 
@@ -131,6 +132,11 @@ public class Demo {
                     System.out.print(downloadController.hashCode() + " ");
                     System.out.print(downloadController.getCurrentDownloadInfo().getState());
                     DownloadResponse response = downloadController.get();
+                    for (URLResponse urlResponse : response.getURLResponses()) {
+                        if (urlResponse.isFailed()) {
+                            System.out.print(urlResponse.getURLRequest().getURL() + " failed " + urlResponse.getFailCause().getClass());
+                        }
+                    }
                     System.out.println(" controller future get " + response.getURLResponses().size());
                 } catch (InterruptedException e) {
                     System.out.println(" InterruptedException");

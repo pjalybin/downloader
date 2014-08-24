@@ -22,16 +22,37 @@ import java.util.concurrent.Semaphore;
  */
 class HttpDownloadTask extends PauseableCallableWithSemaphore<DownloadResponse> {
 
+    /**
+     * Task controller for providing to user in handler
+     */
     private DownloadController downloadController;
-    private final List<URLResponse> completedResponses = Collections.synchronizedList(new ArrayList<URLResponse>());
+    /**
+     * List of completed responses
+     */
+    private final List<URLResponse> completedResponses;
+    /**
+     * Used start task again after interruption
+     */
     private volatile boolean restartFlag = false;
 
+    /**
+     * length of content of current url download.
+     * Used to provide progress information
+     */
     private volatile int currentContentLength;
+    /**
+     * size of already downloaded data of current url.
+     * Used to provide progress information
+     */
     private volatile int currentContentDownloaded;
+    /**
+     * URL request of current download
+     */
     private volatile URLRequest currentRequest;
 
     HttpDownloadTask(Semaphore semaphore) {
         super(semaphore);
+        completedResponses = Collections.synchronizedList(new ArrayList<URLResponse>());
     }
 
     @Override
@@ -44,7 +65,9 @@ class HttpDownloadTask extends PauseableCallableWithSemaphore<DownloadResponse> 
                 firstTime = false;
                 restartFlag = false;
                 completedResponses.clear();
-                if (downloadHandler != null) downloadHandler.onDownloadStarted(downloadController);
+                if (downloadHandler != null) {
+                    downloadHandler.onDownloadStarted(downloadController);
+                }
 
                 for (URLRequest urlRequest : downloadRequest.getURLRequests()) {
                     currentContentLength = 0;
@@ -83,7 +106,9 @@ class HttpDownloadTask extends PauseableCallableWithSemaphore<DownloadResponse> 
                         if (Thread.currentThread().isInterrupted() || stop) {
                             throw e;
                         }
+                        // else continue download next url
                     } finally {
+                        // we need all responses - failed and finished
                         completedResponses.add(response);
                     }
                 }
@@ -93,13 +118,14 @@ class HttpDownloadTask extends PauseableCallableWithSemaphore<DownloadResponse> 
                 }
                 if (Thread.interrupted()) { // clear interrupt flag
                     if (!restartFlag) {
-                        Thread.currentThread().interrupt(); // set interrupt flag
+                        Thread.currentThread().interrupt(); // set back interrupt flag
                         throw e;
                     } else {
+                        // restart interruption
                         // restart and continue work
                         continue;
                     }
-                } else {
+                } else { // not interrupted then propagate error
                     throw e;
                 }
             }
@@ -109,7 +135,7 @@ class HttpDownloadTask extends PauseableCallableWithSemaphore<DownloadResponse> 
             }
             checkInterrupted();
             return downloadResponse;
-        }
+        } // end of restart while
         // never be reached
         throw new RuntimeException("Unreachable");
     }
